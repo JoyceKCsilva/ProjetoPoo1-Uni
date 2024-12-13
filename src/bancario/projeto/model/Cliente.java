@@ -21,6 +21,10 @@ public class Cliente implements Serializable {
 		contas = new ArrayList<>();
 	}
 	
+	
+	//-----------------------------------------------------------------------
+	
+	
 	public void adicionarConta(ContaBancaria c) {
 		if(contas.contains(c)) {
 			System.out.println("Conta já cadastrada");
@@ -58,8 +62,11 @@ public class Cliente implements Serializable {
 			System.out.println("Sua conta não foi encontrada");
 		}
 	}
-	
 
+	
+	//------------------------------------------------------------------------
+
+	
 	@Override
 	public String toString() {
 		return "Cliente [cpf=" + cpf + ", nome=" + nome + ", contas=" + contas + "]";
@@ -93,7 +100,6 @@ public class Cliente implements Serializable {
 	public String getNome() {
 		return nome;
 	}
-
 
 	public void setNome(String nome) {
 		this.nome = nome;

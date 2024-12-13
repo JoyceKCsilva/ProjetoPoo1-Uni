@@ -20,6 +20,10 @@ public class PersistenciaCliente {
 		clientes = carregarClientes();
 	}
 	
+	
+	//--------------------------------------------------------------------------------
+	
+	
 	public void adicionarCliente(Cliente c) {
 		if(clientes.contains(c)) {
 			System.out.println("Cliente já cadastrado");
@@ -30,34 +34,40 @@ public class PersistenciaCliente {
 	}
 	
 	public void removerCliente(Cliente c) {
-	    for (Cliente cliente : clientes) {
-	        if (cliente.getCpf().equals(c.getCpf())) {
-	            clientes.remove(cliente);
-	            System.out.println("Cliente removido com sucesso");
-	            return;
-	        }
-	    }
-	    System.out.println("Este cliente não existe");
+		for (int i = 0; i < clientes.size(); i++) {
+		    Cliente cliente = clientes.get(i);
+		    if (cliente.getCpf().equals(c.getCpf())) {
+		        clientes.remove(i);
+		        System.out.println("Cliente removido com sucesso");
+		        return;
+		    }
+		}
+		System.out.println("Este cliente não existe");
 	}
 	
 	public Cliente localizarClientePorCpf(String cpf) {
-	    for (Cliente cliente : clientes) {
+	    for (int i = 0; i < clientes.size(); i++) {
+	        Cliente cliente = clientes.get(i); 
 	        if (cliente.getCpf().equals(cpf)) {
-	            return cliente;
+	            return cliente; 
 	        }
 	    }
-	    return null;
+	    return null; 
 	}
-	
+
 	public void atualizarCliente(Cliente c) {
 		if(clientes.contains(c)) {
 			int index = clientes.indexOf(c);
 			clientes.set(index, c);
 			System.out.println("Cliente foi atualizada");
 		} else {
-			System.out.println("Cliente n�o encontrado");
+			System.out.println("Cliente não encontrado");
 		}
 	}
+	
+	
+	//-------------------------------------------------------------------------
+	
 	
 	public ArrayList<Cliente> listarClientes() {
         if (clientes.isEmpty()) {
@@ -75,19 +85,20 @@ public class PersistenciaCliente {
         }
     }
 	
-	 @SuppressWarnings("unchecked")
-	    private ArrayList<Cliente> carregarClientes() {
-	        File file = new File(FILE_PATH);
-	        if (!file.exists()) {
-	            return new ArrayList<>();
-	        }
-
-	        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
-	            return (ArrayList<Cliente>) ois.readObject();
-	        } catch (IOException | ClassNotFoundException e) {
-	            System.err.println("Erro ao carregar os dados: " + e.getMessage());
-	            return new ArrayList<>();
-	        }
-	    }
+	@SuppressWarnings("unchecked")
+	private ArrayList<Cliente> carregarClientes() {
+		File file = new File(FILE_PATH);
+		if (!file.exists()) {
+			return new ArrayList<>();
+		}
+		 
+		try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+			return (ArrayList<Cliente>) ois.readObject();
+		} catch (IOException | ClassNotFoundException e) {
+			System.err.println("Erro ao carregar os dados: " + e.getMessage());
+			return new ArrayList<>();
+		}
+	}
+	 
 		
 }
