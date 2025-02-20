@@ -1,142 +1,141 @@
 package bancario.projeto.model;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
-public class ContaBancaria implements Serializable {
-	 private static final long serialVersionUID = 1L;
+import exceptions.ContaInexistenteException;
+import exceptions.SaldoInsuficienteException;
+import exceptions.StatusException;
+import exceptions.ValorInvalidoExeception;
 
-	/**
-	 * 
-	 */
-	private Integer numeroConta;
-	private float saldo;
-	private LocalDateTime dataAbertura;
-	private boolean status;
+public abstract class ContaBancaria implements IConta, Serializable {
+    private static final long serialVersionUID = 1L;
 
-	public ContaBancaria(Integer numero) {
-		this.numeroConta = numero;
-		this.saldo = 0f;
-		this.dataAbertura = LocalDateTime.now();
-		this.status = true;
-	}
-	
-	//------------------------------------------------------------------
+    private Integer numeroConta;
+    private BigDecimal saldo;
+    private LocalDateTime dataAbertura;
+    private boolean status;
+    private List<Transacao> historico;
 
-	public void depositar(float quantia) {
-		if (!status) {
-			System.out.println("Operação não permitida. Conta desativada.");
-	        return;
-	    }
-	    if (quantia <= 0) {
-	    	System.out.println("Valor inválido para depósito.");
-	        return;
-	    }
-	    this.saldo += quantia;
-	    System.out.println("Depósito realizado com sucesso.");
-	}
+    public ContaBancaria(Integer numeroConta) {
+        this.numeroConta = numeroConta;
+        this.saldo = BigDecimal.ZERO;
+        this.dataAbertura = LocalDateTime.now();
+        this.status = true;
+        this.historico = new ArrayList<>();
+    }
 
-	public void sacar(float quantia) {
-		if (!status) {
-			System.out.println("Operação não permitida. Conta desativada.");
-	        return;
-	    }
+    // Métodos existentes
+    public void depositar(BigDecimal quantia) throws ContaInexistenteException, ValorInvalidoExeception {
+        if (!status) {
+            throw new ContaInexistenteException("Operação não permitida. Conta desativada.");
+        }
+        if (quantia.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ValorInvalidoExeception("Valor inválido para depósito.");
+        }
+        saldo = saldo.add(quantia);
+        System.out.println("Depósito realizado com sucesso.");
+        System.out.println("Seu saldo atual é de: " + saldo);
+    }
 
-	    if (quantia <= 0) {
-	    	System.out.println("Valor inválido para saque.");
-	        return;
-	    }
+    public void sacar(BigDecimal quantia) throws ContaInexistenteException, ValorInvalidoExeception, SaldoInsuficienteException {
+        if (!status) {
+            throw new ContaInexistenteException("Operação não permitida. Conta desativada.");
+        }
+        if (quantia.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ValorInvalidoExeception("Valor inválido para saque.");
+        }
+        BigDecimal tarifa = calcularTarifaSaque(quantia);
+        BigDecimal valorTotal = quantia.add(tarifa);
 
-	    if (this.saldo < quantia) {
-	    	System.out.println("Saldo insuficiente.");
-	        return;
-	    }
+        if (saldo.compareTo(valorTotal) < 0) {
+            throw new SaldoInsuficienteException("Saldo insuficiente para saque (incluindo tarifa de R$ " + tarifa + ").");
+        }
 
-	    this.saldo -= quantia;
-	    System.out.println("Saque realizado com sucesso!");
+        saldo = saldo.subtract(valorTotal);
+        historico.add(new Transacao("Saque", quantia, this.numeroConta, 0, tarifa));
+        System.out.println("Saque de R$ " + quantia + " realizado com sucesso! (Tarifa: R$ " + tarifa + ")");
+    }
 
-	}
+    public abstract void transferir(IConta cdestino, BigDecimal quantia) throws ContaInexistenteException, SaldoInsuficienteException, ValorInvalidoExeception;
 
-	public void transferir(ContaBancaria c, float quantia) {
-		if (!status || !c.isStatus()) {
-			System.out.println("Operação não pode ser realizada entre contas desativadas.");
-	        return;
-	    }
-	    if (quantia <= 0) {
-	    	System.out.println("Valor inválido para transferência.");
-	        return;
-	    }
-	    if (this.saldo < quantia) {
-	    	System.out.println("Saldo insuficiente para realizar a transferência.");
-	        return;
-	    }
+    // Método abstrato para calcular tarifa de saque
+    public abstract BigDecimal calcularTarifaSaque(BigDecimal quantia);
 
-	    this.saldo -= quantia;
-	    c.saldo += quantia;
-	    System.out.println("Transferência realizada com sucesso!");
-	    System.out.println("Saldo após a transferência:");
-	    System.out.println("Conta origem: " + this.saldo);
-	    System.out.println("Conta destino: " + c.getSaldo());
-	}
+    public void extratoPorMesAno(int mes, int ano) {
+        System.out.println("Seu extrato para o mês " + mes + "/" + ano + " é:");
+        boolean encontrou = false;
 
-	
-	//------------------------------------------------------------------
-	
-	
-	@Override
-	public int hashCode() {
-		return Objects.hash(numeroConta);
-	}
+        for (Transacao transacao : historico) {
+            if (transacao.getDataHora().getMonthValue() == mes && transacao.getDataHora().getYear() == ano) {
+                System.out.println(transacao);
+                encontrou = true;
+            }
+        }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		ContaBancaria other = (ContaBancaria) obj;
-		return Objects.equals(numeroConta, other.numeroConta);
-	}
-	
-	
-	@Override
-	public String toString() {
-		return "ContaBancaria [numeroConta=" + numeroConta + ", saldo=" + saldo + ", dataAbertura=" + dataAbertura
-				+ ", status=" + status + "]";
-	}
+        if (!encontrou) {
+            System.out.println("Você não realizou nenhuma transação nesse período.");
+        }
+    }
 
-	public Integer getNumeroConta() {
-		return numeroConta;
-	}
+    public void ativar() {
+        this.status = true;
+    }
 
-	public void setNumeroConta(Integer numeroConta) {
-		this.numeroConta = numeroConta;
-	}
+    public void desativar() throws StatusException {
+        if (this.saldo.compareTo(BigDecimal.ZERO) == 0) {
+            this.status = false;
+            System.out.println("Conta desativada com sucesso.");
+        } else {
+            throw new StatusException("Você não pode desativar sua conta se ainda tiver dinheiro nela! Transfira ou saque o valor restante!");
+        }
+    }
 
-	public float getSaldo() {
-		return saldo;
-	}
+    // Getters e setters
+    public LocalDateTime getDataAbertura() {
+        return dataAbertura;
+    }
 
-	public void setSaldo(float saldo) {
-		this.saldo = saldo;
-	}
+    public List<Transacao> getHistorico() {
+        return historico;
+    }
 
-	public LocalDateTime getDataAbertura() {
-		return dataAbertura;
-	}
+    public BigDecimal getSaldo() {
+        return saldo;
+    }
 
-	public void setDataAbertura(LocalDateTime dataAbertura) {
-		this.dataAbertura = dataAbertura;
-	}
+    public Integer getNumeroConta() {
+        return numeroConta;
+    }
 
-	public boolean isStatus() {
-		return status;
-	}
+    public boolean isAtiva() {
+        return status;
+    }
 
-	public void setStatus(boolean status) {
-		this.status = status;
-	}
+    public void setSaldo(BigDecimal saldo) {
+        this.saldo = saldo;
+    }
+
+    @Override
+    public String toString() {
+        return "ContaBancaria [numeroConta=" + numeroConta + ", saldo=" + saldo + ", dataAbertura=" + dataAbertura
+                + ", status=" + (status ? "Ativa" : "Inativa") + "]";
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(numeroConta);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        ContaBancaria other = (ContaBancaria) obj;
+        return numeroConta.equals(other.numeroConta);
+    }
 }
