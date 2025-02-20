@@ -29,7 +29,7 @@ public abstract class ContaBancaria implements IConta, Serializable {
         this.historico = new ArrayList<>();
     }
 
-    // Métodos existentes
+    
     public void depositar(BigDecimal quantia) throws ContaInexistenteException, ValorInvalidoExeception {
         if (!status) {
             throw new ContaInexistenteException("Operação não permitida. Conta desativada.");
@@ -63,14 +63,15 @@ public abstract class ContaBancaria implements IConta, Serializable {
 
     public abstract void transferir(IConta cdestino, BigDecimal quantia) throws ContaInexistenteException, SaldoInsuficienteException, ValorInvalidoExeception;
 
-    // Método abstrato para calcular tarifa de saque
+
     public abstract BigDecimal calcularTarifaSaque(BigDecimal quantia);
 
     public void extratoPorMesAno(int mes, int ano) {
         System.out.println("Seu extrato para o mês " + mes + "/" + ano + " é:");
         boolean encontrou = false;
 
-        for (Transacao transacao : historico) {
+        for (int i = 0; i < historico.size(); i++) {
+            Transacao transacao = historico.get(i);
             if (transacao.getDataHora().getMonthValue() == mes && transacao.getDataHora().getYear() == ano) {
                 System.out.println(transacao);
                 encontrou = true;

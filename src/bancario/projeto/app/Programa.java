@@ -209,7 +209,8 @@ public class Programa {
                                 IConta contaDestino = null;
                                 Cliente clienteDestino = null;
 
-                                for (Cliente c : clientes) { 
+                                for (int i = 0; i < clientes.size(); i++) { 
+                                    Cliente c = clientes.get(i);
                                     contaDestino = c.buscarConta(numeroContaDestino);
                                     if (contaDestino != null) {
                                         clienteDestino = c;
